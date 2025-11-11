@@ -1,0 +1,16 @@
+---
+all:
+  hosts:
+    localhost:
+      ansible_connection: local
+      ansible_python_interpreter: auto_silent
+    ansible_target:
+      ansible_host: 127.0.0.1
+      ansible_port: 2222
+      ansible_python_interpreter: auto_silent
+      ansible_user: root
+  children:
+    local:
+      hosts:
+        localhost: {}
+        ansible_target: {}

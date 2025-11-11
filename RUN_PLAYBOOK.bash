@@ -7,8 +7,7 @@ cd $PLAYBOOK_PATH &&\
  podman run --detach --hostname ansible_target --name ansible_target --publish 2222:22 --rm --volume ~/.ssh:/root/.ssh:ro,z ansible_target:latest &&\
  echo '' > ansible.log &&\
  clear &&\
- ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook --inventory inventory/hosts.yml playbooks/sample_playbook.yml
- # ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook --inventory inventory/hosts.yml --limit ansible_target playbooks/sample_playbook.yml
+ ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook --inventory inventory/main.yml playbooks/sample_playbook.yml
 
 podman container stop ansible_target
 

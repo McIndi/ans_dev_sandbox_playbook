@@ -2,7 +2,6 @@
 **/ansible.log
 **/vault-pw.txt
 **/__pycache__
-hosts.yml
 .venv
 .cjob
 *.out

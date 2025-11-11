@@ -7,7 +7,7 @@ This repository includes a small sample playbook and inventory that demonstrates
 
 Files added:
 - `playbooks/sample_playbook.yml` — example play that applies the role to `localhost`.
-`inventory/hosts.yml` — simple inventory with a `local` group.
+`inventory/main.yml` — simple inventory with a `local` group.
 - `requirements.yml` — used by `ansible-galaxy` to install the role from GitHub.
 - `ansible.cfg` — config that sets `roles_path` to `./roles` and points to the sample inventory.
 
@@ -18,7 +18,7 @@ Quick run (from repo root):
 ansible-galaxy install -r requirements.yml --roles-path ./roles
 
 # run the sample playbook against localhost
-ansible-playbook -i inventory/hosts.yml playbooks/sample_playbook.yml
+ansible-playbook -i inventory/main.yml playbooks/sample_playbook.yml
 ```
 
 You can tweak variables passed to the role in `playbooks/sample_playbook.yml` under the `vars:` block.
