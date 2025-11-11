@@ -17,11 +17,12 @@ cd $PLAYBOOK_PATH &&\
          if [ "${role_count}" -eq 0 ]
             then
                if [ -f roles/requirements.yml ]; then
-                  echo "No roles found in roles/ — installing from roles/requirements.yml"
                   if [ -d ../ans_dev_sandbox_role/ ]
                      then
+                        echo "No roles found in roles/ — linking to ../ans_dev_sandbox_role/"
                         ln -s ../../ans_dev_sandbox_role/ roles/ans_dev_sandbox_role
                      else
+                        echo "No roles found in roles/ — installing from roles/requirements.yml"
                         ansible-galaxy install -r roles/requirements.yml
                   fi
                else
