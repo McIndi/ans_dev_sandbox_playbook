@@ -44,5 +44,4 @@ export PLAYBOOK_PATH=$(GET_SCRIPT_DIR) &&\
  export ANSIBLE_LIBRARY=library &&\
  export ANSIBLE_CALLBACK_RESULT_FORMAT=yaml &&\
  export ANSIBLE_VAULT_PASSWORD_FILE=$PLAYBOOK_PATH/vault-pw.txt &&\
- export SANDBOX_GITHUB_SSH_KEY=~/.ssh/id_rsa &&\
  alias avdad='python $PLAYBOOK_PATH/DECRYPT_VAULTED_ITEMS.py'

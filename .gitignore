@@ -21,7 +21,7 @@ test/
 ansible.cfg
 .ansible/
 .vscode/
-
+ssh_keys/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
