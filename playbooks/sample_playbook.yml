@@ -2,16 +2,19 @@
 - name: Apply ans_dev_sandbox_role to localhost
   hosts: all
   gather_facts: false
+  
+  vars:
+    # Example message - using correct spelling
+    sample_message: "Hello from sample playbook"
+
   roles:
     - role: ans_dev_sandbox_role
-      vars:
-        ans_dev_sandbox_role_example_message: "{{ saample_message }}"
-  
-  # cleanup tasks that run after roles
-  tasks:
-    - name: Remove temporary directory created by ans_dev_sandbox_role
+
+  post_tasks:
+    - name: Clean up temporary directory created by ans_dev_sandbox_role
       ansible.builtin.file:
         path: "{{ temp_dir_results.path }}"
         state: absent
       when: temp_dir_results is defined and temp_dir_results.path is defined
+      failed_when: false
 ...
