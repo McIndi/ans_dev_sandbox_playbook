@@ -32,7 +32,7 @@ cd "${PLAYBOOK_PATH:-.}" || {
 setup_ssh_keys() {
     mkdir -p "$SSH_DIR"
     chmod 700 "$SSH_DIR"
-    ssh-keygen -N '' -f "$SSH_KEY_FILE" -C "ansible@target"
+    echo 'y' | ssh-keygen -N '' -f "$SSH_KEY_FILE" -C "ansible@target"
     cp "$SSH_KEY_FILE.pub" "$SSH_AUTHORIZED_KEYS"
     export ANSIBLE_PRIVATE_KEY_FILE="$PWD/$SSH_KEY_FILE"
 }
