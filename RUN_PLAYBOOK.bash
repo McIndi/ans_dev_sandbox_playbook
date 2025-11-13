@@ -44,6 +44,8 @@ setup_container() {
         return 1
     }
     
+    podman container stop "$CONTAINER_NAME" 2>/dev/null || true
+    
     podman run \
         --detach \
         --hostname "$CONTAINER_NAME" \
