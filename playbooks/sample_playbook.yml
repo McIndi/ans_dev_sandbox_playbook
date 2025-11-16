@@ -2,7 +2,7 @@
 - name: Apply ans_dev_sandbox_role to localhost
   hosts: all
   gather_facts: false
-  
+
   vars:
     # Example message - using correct spelling
     sample_message: "Hello from sample playbook"
