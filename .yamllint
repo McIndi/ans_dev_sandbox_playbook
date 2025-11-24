@@ -20,6 +20,7 @@ rules:
   comments:
     min-spaces-from-content: 1
     require-starting-space: true
+  comments-indentation: false
 
   # Document markers
   document-start:
@@ -57,12 +58,14 @@ rules:
   # Octal values
   octal-values:
     forbid-implicit-octal: true
-    forbid-explicit-octal: false
+    forbid-explicit-octal: true
+
 
 # Ignore paths
 ignore: |
   .venv/
   .cache/
+  .ansible/
   roles/ans_dev_sandbox_role/
   roles/*
   !roles/requirements.yml

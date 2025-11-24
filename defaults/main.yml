@@ -1,4 +1,4 @@
 ---
 # sample plain text variable (https://docs.ansible.com/ansible/latest/playbook_guide/playbooks_variables.html#simple-variables)
 sample_message: "Hello from sample playbook"
-...
+# Removed explicit document end per yamllint config

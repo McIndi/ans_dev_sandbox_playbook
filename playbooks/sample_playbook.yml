@@ -17,4 +17,4 @@
         state: absent
       when: temp_dir_results is defined and temp_dir_results.path is defined
       failed_when: false
-...
+

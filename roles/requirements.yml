@@ -3,4 +3,4 @@
   scm: git
   name: ans_dev_sandbox_role
   version: main
-...
+# Removed explicit document end per yamllint config
