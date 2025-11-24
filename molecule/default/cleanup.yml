@@ -1,0 +1,16 @@
+---
+# Molecule cleanup playbook for default scenario
+# This runs during the cleanup phase to remove test artifacts
+
+- name: Cleanup
+  hosts: localhost
+  gather_facts: false
+  connection: local
+
+  tasks:
+    - name: Remove test temporary directory
+      ansible.builtin.file:
+        path: "/tmp/molecule_test_sandbox"
+        state: absent
+      failed_when: false
+      changed_when: false

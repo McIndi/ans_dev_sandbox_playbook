@@ -22,11 +22,3 @@
       ansible.builtin.debug:
         msg: "Role ans_dev_sandbox_role executed successfully"
 
-  post_tasks:
-    - name: Clean up temporary directory created by ans_dev_sandbox_role
-      ansible.builtin.file:
-        path: "{{ temp_dir_path if temp_dir_path != '' else temp_dir_results.path }}"
-        state: absent
-      when: temp_dir_path != "" or (temp_dir_results is defined and temp_dir_results.path is defined)
-      failed_when: false
-      changed_when: false
