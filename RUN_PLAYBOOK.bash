@@ -145,6 +145,6 @@ main() {
             playbooks/sample_playbook.yml
 }
 
-if [[ -z "$UNIT_TESTING" ]]; then
+if [[ -z "${UNIT_TESTING:-}" ]]; then
     main "$@"
 fi

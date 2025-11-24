@@ -115,7 +115,7 @@ if [[ -d .venv ]]; then
     return 0
 fi
 
-[[ -n "$UNIT_TESTING" ]] && return 0
+[[ -n "${UNIT_TESTING:-}" ]] && return 0
 
 echo "No .venv found — locating a suitable Python (newest < 3.14) to create one..."
 
