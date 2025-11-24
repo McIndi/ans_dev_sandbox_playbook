@@ -64,6 +64,12 @@ jobs:
 
       - name: Run Molecule test - ${{ matrix.scenario }}
         run: |
+          # For with-linting scenario, run linting first (Molecule >=25 removed built-in lint)
+          if [ "${{ matrix.scenario }}" == "with-linting" ]; then
+            echo "Running yamllint and ansible-lint before Molecule test..."
+            yamllint .
+            ansible-lint playbooks/ molecule/
+          fi
           molecule test -s ${{ matrix.scenario }}
         env:
           PY_COLORS: "1"

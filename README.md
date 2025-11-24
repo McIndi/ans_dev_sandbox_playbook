@@ -137,9 +137,9 @@ molecule test
 
 # Run specific scenarios
 molecule test -s localhost-only    # Test localhost connection
-molecule test -s with-linting      # Test with ansible-lint and yamllint
+molecule test -s with-linting      # Syntax + converge only (lint run separately)
 
-# Run linting separately
+# Run linting separately (Molecule >=25 removed the built-in `lint` command)
 yamllint .
 ansible-lint playbooks/ molecule/
 ```
@@ -147,7 +147,7 @@ ansible-lint playbooks/ molecule/
 **Molecule Test Scenarios:**
 - **default**: Full test sequence with idempotence checking
 - **localhost-only**: Validates localhost connection configuration
-- **with-linting**: Includes ansible-lint and yamllint validation
+- **with-linting**: Uses current Molecule without integrated lint stage; run `yamllint .` and `ansible-lint playbooks/ molecule/` manually.
 
 **CI/CD Integration:**
 - GitHub Actions workflow runs all Molecule scenarios on push/PR

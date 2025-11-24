@@ -12,10 +12,10 @@ driver:
     ansible_connection_options:
       ansible_connection: local
 
-lint: |
-  set -e
-  yamllint .
-  ansible-lint
+# NOTE: Molecule >= 25 removed the built-in `lint` command.
+# Linting is now expected to be run separately (e.g. `yamllint .` and `ansible-lint`).
+# The previous inline lint block was removed to avoid ModuleNotFoundError: molecule.command.lint.
+# This scenario name is retained for continuity; it now focuses on syntax + converge + verify.
 
 platforms:
   - name: localhost
@@ -24,11 +24,14 @@ platforms:
 
 provisioner:
   name: ansible
+  env:
+    ANSIBLE_ROLES_PATH: ../../roles
   config_options:
     defaults:
       interpreter_python: auto_silent
       host_key_checking: false
-      stdout_callback: yaml
+      stdout_callback: default
+      result_format: yaml
   inventory:
     group_vars:
       all:
@@ -48,11 +51,7 @@ scenario:
   name: with-linting
   test_sequence:
     - dependency
-    - lint
     - syntax
-    - create
     - prepare
     - converge
     - verify
-    - cleanup
-    - destroy
