@@ -125,6 +125,11 @@ setup_collections() {
         echo "Installing ansible.posix collection..."
         ansible-galaxy collection install ansible.posix
     fi
+    
+    if ! ansible-galaxy collection list 2>/dev/null | grep -q community.general; then
+        echo "Installing community.general collection..."
+        ansible-galaxy collection install community.general
+    fi
 }
 
 # Main execution

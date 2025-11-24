@@ -285,8 +285,10 @@ echo "Running Test 6: setup_collections (install if missing)"
     
     output=$(setup_collections)
     
-    assert_contains "$output" "Installing ansible.posix collection..." "Log message present"
-    assert_contains "$output" "MOCK_GALAXY collection install ansible.posix" "Collection install command called"
+    assert_contains "$output" "Installing ansible.posix collection..." "ansible.posix log message present"
+    assert_contains "$output" "MOCK_GALAXY collection install ansible.posix" "ansible.posix install command called"
+    assert_contains "$output" "Installing community.general collection..." "community.general log message present"
+    assert_contains "$output" "MOCK_GALAXY collection install community.general" "community.general install command called"
     
     exit $FAIL_COUNT
 )
@@ -304,8 +306,9 @@ echo "Running Test 7: setup_collections (skip if present)"
     function podman() { :; }
     function ansible-galaxy() {
         if [[ "$1" == "collection" && "$2" == "list" ]]; then
-            # Return existing collection
+            # Return existing collections
             echo "ansible.posix 1.5.4"
+            echo "community.general 8.0.0"
         elif [[ "$1" == "collection" && "$2" == "install" ]]; then
             echo "MOCK_GALAXY $*"
         fi
@@ -318,10 +321,17 @@ echo "Running Test 7: setup_collections (skip if present)"
     output=$(setup_collections)
     
     if [[ "$output" == *"Installing ansible.posix collection"* ]]; then
-        echo "FAIL: Should not attempt to install if collection exists"
+        echo "FAIL: Should not attempt to install ansible.posix if collection exists"
         FAIL_COUNT=$((FAIL_COUNT + 1))
     else
-        echo "PASS: No install attempted"
+        echo "PASS: No ansible.posix install attempted"
+    fi
+    
+    if [[ "$output" == *"Installing community.general collection"* ]]; then
+        echo "FAIL: Should not attempt to install community.general if collection exists"
+        FAIL_COUNT=$((FAIL_COUNT + 1))
+    else
+        echo "PASS: No community.general install attempted"
     fi
     
     if [[ "$output" == *"MOCK_GALAXY collection install"* ]]; then
