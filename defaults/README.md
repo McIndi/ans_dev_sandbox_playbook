@@ -1,9 +1,9 @@
 # defaults/
 
-This directory holds a convenience default variable file for playbooks in this repository. It is NOT a role `defaults/` directory and therefore is not auto-loaded by Ansible.
+Convenience variable file (not a role `defaults/` directory). Must be explicitly loaded via `vars_files`.
 
 File of interest:
-- `main.yml` — contains example/default variables consumed by the sample playbook (only if explicitly referenced).
+- `main.yml` — defines `sample_message`, matching the override already present in `sample_playbook.yml` (kept simple for illustration).
 
 Usage
 - If you want these values applied, include them explicitly:
@@ -19,6 +19,6 @@ Usage
 - Edit `defaults/main.yml` to experiment with different values without modifying the role.
 
 Notes
-- Keep values minimal and non-sensitive; store secrets in vaulted host/group vars instead.
-- To promote a value to true role defaults, move it into the role’s `defaults/main.yml`.
-- Clarify precedence: if loaded via `vars_files`, these values outrank role defaults but are still below play and extra vars.
+- Keep values minimal & non-sensitive; put secrets in vaulted host/group vars.
+- To promote a variable to the role's intrinsic defaults, move it into the role’s `defaults/main.yml`.
+- Precedence: if included via `vars_files`, these values override role defaults but remain below play vars and extra vars.

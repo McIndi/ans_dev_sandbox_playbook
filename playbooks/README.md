@@ -1,77 +1,63 @@
 # playbooks/
 
-This directory contains example playbooks that consume roles and variables in this repo.
+Example playbook(s) consuming the sandbox role.
 
-File of interest:
-- `sample_playbook.yml` — applies the `ans_dev_sandbox_role` to hosts defined in `inventory/main.yml`.
+## File
+`sample_playbook.yml` targets `hosts: all` (both `localhost` and `ansible_target` if container running). Override or limit with `-l` as needed.
 
-Usage
-
+## Basic Run
 ```bash
-# From repo root
 source ACTIVATE_SANDBOX_ENV.bash
 ansible-galaxy install -r roles/requirements.yml --roles-path roles
 ansible-playbook -i inventory/main.yml playbooks/sample_playbook.yml
 ```
+Limit to the container host only:
+```bash
+ansible-playbook -i inventory/main.yml playbooks/sample_playbook.yml -l ansible_target
+```
 
-### Variable Precedence & Overrides
-
-The playbook demonstrates overriding defaults supplied by the role or convenience `defaults/main.yml` in the repository root:
-
-Order (simplified subset high → low):
-1. Extra vars (`--extra-vars` / `-e`)
-2. Play vars (`vars:` block inside playbook)
+## Variable Precedence (High → Low, subset)
+1. Extra vars (`-e` / `--extra-vars`)
+2. Play vars (`vars:` in playbook)
 3. Role vars (`vars/` inside role)
 4. Role defaults (`defaults/` inside role)
-5. Convenience defaults file here (`../defaults/main.yml`) only if explicitly loaded
+5. External files loaded via `vars_files` (e.g. `../defaults/main.yml`) — only if explicitly referenced
 
-Example overriding with extra vars:
+Override example:
 ```bash
 ansible-playbook -i inventory/main.yml playbooks/sample_playbook.yml \
-	-e repo_clone_depth=1 -e enable_cleanup=true
+  -e repo_clone_depth=1 -e enable_cleanup=true
 ```
 
-### Adding Vaulted Variables
-
-If you introduce vaulted variables referenced by this playbook:
-```bash
-ansible-vault encrypt_string 'supersecret' --name 'vault_example_password' > encrypted.txt
-```
-Then include the encrypted block in a vars file and decrypt for inspection with:
-```bash
-python3 DECRYPT_VAULTED_ITEMS.py --file path/to/vars.yml --vault-id dev
-```
-
-### Role Installation
-
-The role is fetched via `roles/requirements.yml`:
-```bash
-ansible-galaxy install -r roles/requirements.yml --roles-path roles --force
-```
-Re-run this if you update `requirements.yml` or want the latest upstream version.
-
-### Extra Vars File Example
-
+Vars file example:
 ```bash
 cat > custom_vars.yml <<'EOF'
 repo_clone_depth: 1
-enable_cleanup: true
-EOF
 
+EOF
 ansible-playbook -i inventory/main.yml playbooks/sample_playbook.yml -e @custom_vars.yml
 ```
 
-Customization
-- Edit the `vars:` block in `sample_playbook.yml` to override defaults or provide example inputs to the role.
-- Use extra vars (`-e`) or vars files to parameterize runs for CI.
-- The playbook includes a `post_tasks` step to clean up temporary work created by the role (idempotence readiness).
+## Vaulted Data
+Create encrypted string:
+```bash
+ansible-vault encrypt_string 'supersecret' --name 'vault_example_password'
+```
+Include block in a vars file; inspect with:
+```bash
+python3 DECRYPT_VAULTED_ITEMS.py --file path/to/vars.yml --vault-id dev
+```
+See root `README.md` for the vault utility overview.
 
-### Troubleshooting
+## Post Tasks
+`post_tasks` cleans up temporary role output for idempotence. Adjust cleanup logic as role evolves.
 
-| Issue | Cause | Resolution |
-|-------|-------|------------|
-| Role tasks not found | Role not installed | Re-run `ansible-galaxy install ...` |
-| Variable not overridden | Precedence misunderstanding | Use `-e` or ensure vars block contains updated value |
-| Vault decrypt failure | Wrong vault id/password | Verify `vault-pw.txt` and vault block label |
-| Idempotence changes | Task not declarative | Add `changed_when: false` or use module state parameters |
+## Troubleshooting (Quick)
+| Issue | Cause | Action |
+|-------|-------|--------|
+| Role not found | Not installed | Re-run `ansible-galaxy install ...` |
+| Override ignored | Precedence confusion | Use `-e` or move var to higher layer |
+| Vault failure | Wrong id/password | Check vault label & password file |
+| Idempotence change | Task not declarative | Use module state / set `changed_when` |
+
 

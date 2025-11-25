@@ -3,23 +3,107 @@
 [![Molecule Tests](https://github.com/briankearney/ans_dev_sandbox_playbook/actions/workflows/molecule.yml/badge.svg)](https://github.com/briankearney/ans_dev_sandbox_playbook/actions/workflows/molecule.yml)
 [![Unit Tests](https://github.com/briankearney/ans_dev_sandbox_playbook/actions/workflows/unit-tests.yml/badge.svg)](https://github.com/briankearney/ans_dev_sandbox_playbook/actions/workflows/unit-tests.yml)
 
-Ansible Playbook Sandbox
+Lightweight Ansible playbook sandbox for developing and validating the GitHub-hosted role `briankearney/ans_dev_sandbox_role` using environment‑based configuration, Molecule scenarios, and unit tests.
 
-## Overview
-
-An Ansible playbook sandbox that demonstrates running a GitHub-hosted role locally against `localhost`.
-
-This repository is intentionally small and aims to provide a convenience environment for developing and testing the
-`briankearney/ans_dev_sandbox_role` role. It emphasizes an enterprise-safe configuration style (environment variables over `ansible.cfg`), reproducible local testing (Molecule + unit tests), and secure vaulted variable handling.
-
-**Quick Overview**
+## Quick Map
 - **Playbook:** `playbooks/sample_playbook.yml`
-- **Inventory:** `inventory/main.yml` (`local` group with `localhost`)
-- **Role requirements:** `roles/requirements.yml` (used by `ansible-galaxy` to fetch the role)
+- **Inventory:** `inventory/main.yml` (`local` group contains `localhost` and dynamic container host `ansible_target`)
+- **Role requirements:** `roles/requirements.yml`
 - **Helper scripts:** `ACTIVATE_SANDBOX_ENV.bash`, `RUN_PLAYBOOK.bash`, `DECRYPT_VAULTED_ITEMS.py`
-- **Testing:** Molecule scenarios (`molecule/`) + Bash & Python unit tests (`tests/`)
-- **Linting configs:** `.ansible-lint`, `.yamllint`
-- **Optional container workflow:** `containerfile` (build a reproducible image if desired)
+- **Testing:** Molecule scenarios + Bash & Python unit tests
+- **Linting:** `.ansible-lint`, `.yamllint`
+- **Container build:** `containerfile` (used by `RUN_PLAYBOOK.bash` to create `ansible_target`)
+- **Dynamic assets (generated, not committed):** `ssh_keys/`, `vault-pw.txt`, virtualenv `.venv`
+
+## Design Philosophy (Condensed)
+No `ansible.cfg` is committed—enterprise environments often disallow it. All configuration is set via exported environment variables in `ACTIVATE_SANDBOX_ENV.bash` (session-scoped, auditable, isolated). `.gitignore` blocks accidental `ansible.cfg` addition.
+
+Key exported examples:
+```bash
+export ANSIBLE_ROLES_PATH=roles
+export ANSIBLE_VAULT_PASSWORD_FILE="$PLAYBOOK_PATH/vault-pw.txt"
+export ANSIBLE_LOG_PATH=./ansible.log
+```
+
+## Prerequisites
+- Python >= 3.10 (< 3.14 chosen automatically) 
+- ansible-core >= 2.14
+- Optional: Podman or Docker (container workflow)
+- Dependencies from `requirements.txt` (installed by activation script)
+
+## Usage (Typical Flow)
+```bash
+git clone <repo>
+cd ans_dev_sandbox_playbook
+source ACTIVATE_SANDBOX_ENV.bash        # creates .venv, installs deps
+ansible-galaxy install -r roles/requirements.yml --roles-path roles
+ansible-playbook -i inventory/main.yml playbooks/sample_playbook.yml
+```
+Wrapper (builds container + runs playbook):
+```bash
+./RUN_PLAYBOOK.bash
+```
+Limit to localhost only:
+```bash
+ansible-playbook -i inventory/main.yml playbooks/sample_playbook.yml -l localhost
+```
+
+## Container Workflow (Brief)
+`RUN_PLAYBOOK.bash` builds an image via `containerfile`, starts `ansible_target` (SSH exposed on host port 2222), generates ephemeral `ssh_keys/`, installs required collections (`ansible.posix`, `community.general`), and runs the playbook across `localhost` + `ansible_target` (unless limited). These artifacts are transient.
+
+## Testing & Linting
+Run core tests:
+```bash
+bash tests/test_activate_sandbox_env.bash
+bash tests/test_run_playbook.bash
+python3 -m unittest -v test_DECRYPT_VAULTED_ITEMS.py
+```
+Run Molecule default scenario:
+```bash
+source ACTIVATE_SANDBOX_ENV.bash
+molecule test -s default
+```
+Lint (Molecule ≥25 removed built-in lint stage):
+```bash
+yamllint .
+ansible-lint playbooks/ molecule/
+```
+`pytest-testinfra` is installed (via `requirements.txt`) but not yet used—future `verify` steps could adopt it.
+
+## Vault Decryption Utility
+Inspect encrypted blocks:
+```bash
+python3 DECRYPT_VAULTED_ITEMS.py --file path/to/vars.yml --vault-id dev
+python3 DECRYPT_VAULTED_ITEMS.py --file path/to/vars.yml --vault-id dev --decode
+```
+Features: graceful errors, optional base64 decode, colorized output unless `--no-color`.
+
+## Inventory Notes
+`inventory/main.yml` includes both `localhost` (connection local) and `ansible_target` (container host with forwarded SSH on port 2222). Use `-l` to scope runs.
+
+## Dynamic / Demo Artefacts
+- `ssh_keys/` created only by `RUN_PLAYBOOK.bash` (excluded from repo)
+- `vault-pw.txt` demo password file—replace or manage securely in production
+- Temporary virtualenv `.venv` created automatically, removable at will
+
+## Troubleshooting (Selected)
+| Symptom | Cause | Resolution |
+|---------|-------|-----------|
+| `molecule: command not found` | Not activated venv | `source ACTIVATE_SANDBOX_ENV.bash` |
+| Idempotence fails | Non-declarative task | Adjust module params / `changed_when` |
+| Vault decrypt error | Wrong vault id/password | Verify vault block & `vault-pw.txt` |
+| Python selection unexpected | Older interpreter first | Install newer Python ≥3.10 |
+
+## Security & Compliance
+No persistent config overrides (`ansible.cfg` avoided). Generated SSH keys & demo vault password are sandbox-only. Environment variable configuration is ephemeral and auditable.
+
+## Contributing (Short)
+1. Branch & modify.
+2. Run lint + unit + Molecule.
+3. Open PR with concise summary.
+
+---
+Suggestions or improvements? Open an issue or PR.
 
 ## Design Philosophy
 
@@ -168,18 +252,8 @@ yamllint .
 ansible-lint playbooks/ molecule/
 ```
 
-**Molecule Test Scenarios:**
-- **default**: Full test sequence with idempotence checking
-- **localhost-only**: Validates localhost connection configuration
-- **with-linting**: Uses current Molecule without integrated lint stage; run `yamllint .` and `ansible-lint playbooks/ molecule/` manually.
-
-**CI/CD Integration:**
-- GitHub Actions workflow runs all Molecule scenarios on push/PR
-- Matrix testing across Python 3.10, 3.11, and 3.12
-- Automated linting validation
-
-For detailed Molecule testing documentation, see `molecule/README.md`.
-For detailed test documentation, see `tests/README.md`.
+**Molecule scenarios:** `default`, `localhost-only`, `with-linting` (see `molecule/README.md` for concise scenario descriptions).
+CI matrix (Python 3.10–3.12) runs Molecule + unit tests; badges above reflect status.
 
 ## Vault Decryption Utility
 
@@ -206,16 +280,7 @@ Features:
 - Modify example variables in `defaults/main.yml` or in the `vars:` block of `playbooks/sample_playbook.yml`.
 - The `defaults/` directory here is a convenience—not a role `defaults/`. Include it explicitly via `vars_files` if needed.
 
-Files and directories
-- `defaults/` : convenience defaults (not auto-loaded like role defaults)
-- `inventory/` : sample inventory
-- `playbooks/` : sample playbook(s) invoking the role
-- `roles/requirements.yml` : role source list for `ansible-galaxy`
-- `molecule/` : Molecule test scenarios
-- `tests/` : unit tests
-- `.ansible-lint`, `.yamllint` : lint configuration
-- `containerfile` : optional container build file
-- `ssh_keys/` : test-only SSH key material (see Security section)
+Files & directories (quick reference): `defaults/`, `inventory/`, `playbooks/`, `roles/requirements.yml`, `molecule/`, `tests/`, `.ansible-lint`, `.yamllint`, `containerfile`.
 
 
 ## Troubleshooting

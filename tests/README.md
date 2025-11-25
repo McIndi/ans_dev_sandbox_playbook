@@ -1,8 +1,6 @@
 # Tests
 
-Unit tests for the project's helper scripts and automation tools.
-
-This directory contains comprehensive test suites for verifying the functionality of both Bash scripts and Python utilities used in this repository.
+Unit tests for helper scripts and Python utility. `pytest-testinfra` is installed but not yet used—future expansion could move certain system assertions from Molecule `verify.yml` into testinfra modules for richer validation.
 
 ## Test Overview
 
@@ -57,7 +55,7 @@ bash tests/test_activate_sandbox_env.bash && \
 
 ## CI/CD Integration
 
-All unit tests run automatically via GitHub Actions on every push and pull request to `main` and `develop` branches.
+All unit tests run automatically via GitHub Actions (push/PR to `main` & `develop`). Matrix covers Python 3.10–3.12. Consider adding optional testinfra stage later.
 
 ### GitHub Actions Workflow
 
@@ -68,16 +66,14 @@ All unit tests run automatically via GitHub Actions on every push and pull reque
 - Pull requests to `main` or `develop`
 - Manual workflow dispatch
 
-**Matrix Testing**:
-- Python versions: 3.10, 3.11, 3.12
-- All tests run across all Python versions
+**Matrix Testing**: Python 3.10, 3.11, 3.12
 
 **Jobs**:
 1. **bash-tests**: Runs both Bash script tests (`test_activate_sandbox_env.bash`, `test_run_playbook.bash`)
 2. **python-tests**: Runs Python unit tests (`test_DECRYPT_VAULTED_ITEMS.py`) with verbose output
 3. **test-summary**: Aggregates results from both jobs
 
-**Artifacts**: Test logs are uploaded on failure and retained for 7 days for debugging.
+**Artifacts**: Failure logs retained briefly (7 days) for debugging.
 
 **Viewing Results**:
 - Check the [Actions tab](https://github.com/briankearney/ans_dev_sandbox_playbook/actions) in the repository
@@ -114,7 +110,7 @@ Tests the Ansible playbook runner wrapper script.
 
 ### `test_DECRYPT_VAULTED_ITEMS.py`
 
-Comprehensive unit tests for the Ansible vault decryption utility using Python's `unittest` framework.
+Comprehensive unit tests for the vault decryption utility (`DECRYPT_VAULTED_ITEMS.py`) using `unittest`.
 
 **Test Coverage (10 test cases):**
 
@@ -142,11 +138,7 @@ Comprehensive unit tests for the Ansible vault decryption utility using Python's
 - **Temporary Files**: Uses `tempfile` for creating test YAML files
 - **Comprehensive Coverage**: Tests both success and failure scenarios
 
-**Prerequisites:**
-- Python 3.x
-- `unittest` (standard library)
-- `PyYAML` (for YAML parsing)
-- `pygments` (optional - will be mocked if not available)
+**Prerequisites:** Python 3.x, `PyYAML`; `pygments` optional (mocked if absent).
 
 ### Sample Successful Output (Bash)
 
@@ -163,28 +155,14 @@ ALL TESTS PASSED
 TEST: python version selection ... FAIL (expected 3.12, got 3.8)
 ```
 
-## Test Framework Details
+## Framework Notes
+| Type | Framework | Key Traits |
+|------|-----------|-----------|
+| Bash | Custom assertions | No external deps, environment isolation |
+| Python | `unittest` + mocks | Temp dirs, broad success/failure coverage |
 
-### Bash Tests
-- **Framework**: Custom lightweight assertion functions
-- **Portability**: No external dependencies required
-- **Isolation**: Uses environment variables to prevent side effects
-
-### Python Tests
-- **Framework**: Python's built-in `unittest`
-- **Mocking**: Uses `unittest.mock` for external dependencies
-- **Isolation**: Creates temporary directories for file-based tests
-- **Cleanup**: Automatic cleanup via `setUp`/`tearDown` methods
-
-## Contributing Tests
-
-Guidelines for adding new tests:
-1. Prefer small, isolated test cases.
-2. Mirror naming style: `test_<script>.bash` or `test_<module>.py`.
-3. For Python, use `unittest` and mock external calls (`subprocess.run`, network, filesystem) to keep tests deterministic.
-4. Keep fixtures ephemeral (use `tempfile`); avoid committing test artifacts.
-5. Ensure idempotence—tests can run multiple times cleanly.
-6. Update this README if adding new categories.
+## Extending
+Add new Bash tests (`test_<script>.bash`) or Python modules (`test_<module>.py`). For system-level assertions (filesystem state, services) consider adopting `pytest-testinfra` and referencing hosts defined in the Molecule scenarios.
 
 ## Prerequisites
 
