@@ -26,7 +26,7 @@ export ANSIBLE_LOG_PATH=./ansible.log
 ```
 
 ## Prerequisites
-- Python >= 3.10 (< 3.14 chosen automatically) 
+- Python >= 3.10 (< 3.14 chosen automatically; selects newest available, currently supports 3.10–3.13)
 - ansible-core >= 2.14
 - Optional: Podman or Docker (container workflow)
 - Dependencies from `requirements.txt` (installed by activation script)
@@ -137,7 +137,7 @@ This approach provides:
 
 **Prerequisites**
 - Ansible (recommended: recent ansible-core >= 2.14)
-- Python 3.10+ (matrix tests run 3.10–3.12)
+- Python 3.10+ (matrix tests run 3.10–3.13)
 - Optional: Docker/Podman (to use `containerfile`)
 - Python dependencies (`requirements.txt`)
 
@@ -197,7 +197,7 @@ This repository includes comprehensive unit tests for both helper scripts and Py
 
 **Automated CI/CD:**
 - All unit tests run automatically via GitHub Actions (see badges above)
-- Matrix testing across Python 3.10, 3.11, and 3.12
+- Matrix testing across Python 3.10, 3.11, 3.12, and 3.13
 - Test results visible in the [Actions tab](https://github.com/briankearney/ans_dev_sandbox_playbook/actions)
 
 **Bash Script Tests:**
@@ -253,7 +253,7 @@ ansible-lint playbooks/ molecule/
 ```
 
 **Molecule scenarios:** `default`, `localhost-only`, `with-linting` (see `molecule/README.md` for concise scenario descriptions).
-CI matrix (Python 3.10–3.12) runs Molecule + unit tests; badges above reflect status.
+CI matrix (Python 3.10–3.13) runs Molecule + unit tests; badges above reflect status.
 
 ## Vault Decryption Utility
 

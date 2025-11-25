@@ -48,19 +48,20 @@ echo "Running Test 1: select_python logic"
     
     # Test select_python with valid input
     input="
+/usr/bin/python3.13:3.13.0
 /usr/bin/python3.12:3.12.0
 /usr/bin/python3.11:3.11.5
 "
     result=$(echo "$input" | select_python)
-    assert_equals "/usr/bin/python3.12" "$result" "Select newest python < 3.14"
+    assert_equals "/usr/bin/python3.13" "$result" "Select newest python < 3.14"
 
     # Test with newer python
     input="
-/usr/bin/python3.15:3.15.0
+/usr/bin/python3.13:3.13.0
 /usr/bin/python3.12:3.12.0
 "
     result=$(echo "$input" | select_python)
-    assert_equals "/usr/bin/python3.12" "$result" "Ignore python >= 3.14"
+    assert_equals "/usr/bin/python3.13" "$result" "Ignore python >= 3.14"
 
     # Test with invalid input
     input="
