@@ -142,7 +142,7 @@ python3 DECRYPT_VAULTED_ITEMS.py --file vars/file.yml --vault-id dev [--decode] 
 
 ### External Dependencies
 
-- **Collections**: `ansible.posix:2.1.0`, `community.general:12.0.1` (installed by `RUN_PLAYBOOK.bash`)
+- **Collections**: `ansible.posix`, `community.general` (installed by `RUN_PLAYBOOK.bash`)
 - **Container Runtime**: Podman (preferred) or Docker with feature detection
 - **Python Packages**: `requirements.txt` includes `molecule`, `molecule-plugins`, `ansible-lint`, `yamllint`, `pygments`, `pytest-testinfra`
 
