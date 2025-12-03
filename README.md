@@ -54,6 +54,11 @@ Limit to localhost only:
 ansible-playbook -i inventory/main.yml playbooks/sample_playbook.yml -l localhost
 ```
 
+## Quick Commands
+- **Full workflow:** `./RUN_PLAYBOOK.bash`
+- **Localhost only:** `ansible-playbook -i inventory/main.yml playbooks/sample_playbook.yml -l localhost`
+- **Container target only:** `ansible-playbook -i inventory/main.yml playbooks/sample_playbook.yml -l ansible_target`
+
 ## Container Workflow (Brief)
 `RUN_PLAYBOOK.bash` builds an image via `containerfile`, starts `ansible_target` (SSH exposed on host port 2222), generates ephemeral `ssh_keys/`, installs required collections (`ansible.posix`, `community.general`), and runs the playbook across `localhost` + `ansible_target` (unless limited). These artifacts are transient.
 
