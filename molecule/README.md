@@ -120,24 +120,56 @@ molecule verify          # Just run verification
 
 ## Verification Tests
 
-Each scenario includes verification tasks in `verify.yml`:
+This project uses **pytest-testinfra** for verification, providing robust Python-based system state testing. Testinfra offers better assertion capabilities, clearer test output, and more maintainable test code compared to Ansible-based verification.
 
-### Default Scenario Verification
-- Python interpreter availability
-- Ansible functionality (ping test)
-- Role execution success
-- Temporary directory cleanup
+### Testinfra Integration
 
-### Localhost-Only Scenario Verification
-- Fact gathering validation
-- Localhost connectivity
-- Python interpreter functionality
-- Connection type verification
+**Default Scenario** (`molecule/default/test_default.py`):
+- Python interpreter availability and functionality
+- Ansible operational verification (ping test)
+- Role execution artifact validation
+- System fact gathering capabilities
+- Git command availability
+- Temporary directory cleanup verification
+- Python YAML module availability
 
-### With-Linting Scenario Verification
-- Linting success confirmation
-- System state validation
-- Role execution verification
+**Localhost-Only Scenario** (`molecule/localhost-only/test_localhost.py`):
+- Localhost connection type verification
+- Python interpreter detection and path resolution
+- Fact gathering capabilities (hostname, OS family, user)
+- Ansible localhost connectivity
+- Required tool availability (python3, git, ansible)
+- Environment variable configuration
+
+**With-Linting Scenario**:
+- Uses Ansible-based verification (legacy `verify.yml`)
+- Focuses on linting validation
+
+### Running Testinfra Tests
+
+```bash
+# Run verification as part of full test sequence
+molecule test -s default
+
+# Run only the verify step
+molecule verify -s default
+
+# Run testinfra tests directly with pytest
+pytest molecule/default/test_default.py -v
+pytest molecule/localhost-only/test_localhost.py -v
+
+# Run with additional pytest options
+pytest molecule/default/test_default.py -v --tb=short
+pytest molecule/default/test_default.py -v -k "test_python"
+```
+
+### Legacy Ansible Verification
+
+For reference, the original Ansible-based verification playbooks are preserved as:
+- `molecule/default/verify_legacy.yml`
+- `molecule/localhost-only/verify_legacy.yml`
+
+These can be used as fallback or reference implementations.
 
 ## Linting Configuration
 

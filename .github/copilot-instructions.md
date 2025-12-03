@@ -13,7 +13,7 @@ This is an **Ansible playbook sandbox** for developing and testing the GitHub-ho
 
 ### Critical Files
 
-- `ACTIVATE_SANDBOX_ENV.bash` - Sources this first; sets up venv, exports ~15 ANSIBLE_* variables, selects Python 3.10-3.13 (excludes 3.14+)
+- `ACTIVATE_SANDBOX_ENV.bash` - Sources this first; sets up venv, exports ~15 ANSIBLE_* variables, selects Python 3.10-3.12 (excludes 3.13+), removes pytest-ansible to avoid plugin conflicts
 - `RUN_PLAYBOOK.bash` - End-to-end workflow script (builds container, generates SSH keys, installs roles/collections, runs playbook)
 - `DECRYPT_VAULTED_ITEMS.py` - Utility for inspecting Ansible vault blocks with optional base64 decoding
 - `containerfile` - Fedora-based SSH target for Ansible testing (exposes port 22, runs sshd in foreground)
@@ -96,10 +96,11 @@ ansible-lint playbooks/ molecule/
 
 ### Python Version Selection
 
-The activation script auto-selects newest Python **3.10-3.13** (excludes 3.14+). Logic in `select_python()` function:
+The activation script auto-selects newest Python **3.10-3.12** (excludes 3.13+). Logic in `select_python()` function:
 - Scans `/usr/bin/`, `/usr/local/bin/`, `/opt/*/bin/` for `python3*`
-- Parses semantic versions, selects highest `< 3.14.0`
+- Parses semantic versions, selects highest `< 3.13.0`
 - Falls back to `python3` in PATH if no candidates found
+- Automatically uninstalls `pytest-ansible` after pip install to prevent plugin conflicts with `pytest-testinfra`
 
 ### YAML Formatting
 
@@ -192,9 +193,10 @@ trap cleanup EXIT
 ## Troubleshooting Context
 
 - **"molecule: command not found"** → Forgot to `source ACTIVATE_SANDBOX_ENV.bash`
+- **argparse.ArgumentError with --ansible-inventory** → `pytest-ansible` plugin conflict; activation script auto-removes it
 - **Vault decrypt errors** → Verify vault-id matches block header (`vault_id: !vault |`)
 - **Container port conflicts** → Default port 2222 may be in use; modify `CONTAINER_HOST_PORT` in `RUN_PLAYBOOK.bash`
-- **Python version issues** → Activation script selects < 3.14; install Python 3.13 if needed
+- **Python version issues** → Activation script selects 3.10-3.12; install Python 3.12 if needed (3.13+ has pytest plugin conflicts)
 
 ## Development Guidelines
 

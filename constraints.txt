@@ -1,0 +1,7 @@
+# Python package constraints for ans_dev_sandbox_playbook
+# This file specifies packages that should NOT be installed to avoid conflicts
+
+# pytest-ansible conflicts with pytest-testinfra (both register --inventory option)
+# This causes argparse.ArgumentError during pytest initialization
+# We only need pytest-testinfra for Molecule verify, so exclude pytest-ansible
+# Uninstall after ansible-dev-tools installation with: pip uninstall -y pytest-ansible

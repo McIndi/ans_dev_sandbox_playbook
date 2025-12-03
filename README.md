@@ -240,7 +240,7 @@ The tests verify:
 
 **Molecule Tests (Ansible Playbook Testing):**
 
-This repository includes comprehensive Molecule testing infrastructure for validating the Ansible playbook and role. Molecule tests are located in the `molecule/` directory.
+This repository includes comprehensive Molecule testing infrastructure for validating the Ansible playbook and role. Molecule tests use **pytest-testinfra** for verification, providing robust Python-based system state assertions.
 
 ```bash
 # Activate sandbox environment
@@ -260,6 +260,8 @@ ansible-lint playbooks/ molecule/
 
 **Molecule scenarios:** `default`, `localhost-only`, `with-linting` (see `molecule/README.md` for concise scenario descriptions).
 CI matrix (Python 3.10–3.13) runs Molecule + unit tests; badges above reflect status.
+
+**Verification Method**: Tests use pytest-testinfra for Python-based system state validation. Legacy Ansible-based verification playbooks are preserved as `verify_legacy.yml` files for reference.
 
 ## Vault Decryption Utility
 

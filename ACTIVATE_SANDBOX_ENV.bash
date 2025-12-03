@@ -77,7 +77,7 @@ $p:$ver"
     printf '%s\n' "$candidates"
 }
 
-# Select best Python version (newest < 3.14)
+# Select best Python version (newest < 3.13 due to pytest-testinfra/pytest-ansible conflicts)
 select_python() {
     # Read candidate lines from stdin in the Python program invoked with -c so
     # the piped input becomes python's sys.stdin (using a here-doc would steal
@@ -94,7 +94,7 @@ for line in sys.stdin:
     try:
         path, ver = line.split(":", 1)
         parts = tuple(int(x) for x in ver.split(".")[:3])
-        if parts < (3, 14, 0) and (best is None or parts > best):
+        if parts < (3, 13, 0) and (best is None or parts > best):
             best = parts
             best_path = path
     except (ValueError, IndexError):
@@ -117,15 +117,15 @@ fi
 
 [[ -n "${UNIT_TESTING:-}" ]] && return 0
 
-echo "No .venv found — locating a suitable Python (newest < 3.14) to create one..."
+echo "No .venv found — locating a suitable Python (newest < 3.13) to create one..."
 
 candidates=$(find_python) || {
-    echo "No python3 interpreters found on the system. Please install Python 3.13 or older." >&2
+    echo "No python3 interpreters found on the system. Please install Python 3.10-3.12." >&2
     return 1
 }
 
 picked=$(echo "$candidates" | select_python) || {
-    echo "No suitable Python < 3.14 found. Please install Python 3.13 or older." >&2
+    echo "No suitable Python < 3.13 found. Please install Python 3.10-3.12." >&2
     return 1
 }
 
@@ -146,6 +146,10 @@ source ./.venv/bin/activate
 VENV_PY="$(pwd)/.venv/bin/python"
 "$VENV_PY" -m pip install --upgrade pip
 "$VENV_PY" -m pip install -r requirements.txt
+
+# Uninstall pytest-ansible to avoid plugin conflict with pytest-testinfra
+# Both plugins register --inventory/--ansible-inventory causing argparse errors
+"$VENV_PY" -m pip uninstall -y pytest-ansible 2>/dev/null || true
 
 # Convenient alias for decrypting vaulted items
 alias avdad='python "$PLAYBOOK_PATH/DECRYPT_VAULTED_ITEMS.py"'

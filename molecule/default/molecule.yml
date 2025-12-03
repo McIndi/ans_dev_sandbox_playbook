@@ -37,11 +37,13 @@ provisioner:
         ansible_connection: local
   playbooks:
     converge: converge.yml
-    verify: verify.yml
     prepare: prepare.yml
 
 verifier:
-  name: ansible
+  name: testinfra
+  options:
+    v: 1
+  directory: ../default
 
 scenario:
   name: default

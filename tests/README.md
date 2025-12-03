@@ -2,7 +2,7 @@
 
 For test strategies, validation workflows, and CI/CD integration, see the [Testing and Validation](https://github.com/briankearney/ans_dev_sandbox_playbook/wiki/Testing-and-Validation) section of the [project wiki](https://github.com/briankearney/ans_dev_sandbox_playbook/wiki).
 
-Unit tests for helper scripts and Python utility. `pytest-testinfra` is installed but not yet used—future expansion could move certain system assertions from Molecule `verify.yml` into testinfra modules for richer validation.
+Unit tests for helper scripts and Python utility. The project uses **pytest-testinfra** for Molecule scenario verification, providing robust Python-based system state testing with better assertion capabilities compared to Ansible-based verification.
 
 ## Test Overview
 
@@ -57,7 +57,9 @@ bash tests/test_activate_sandbox_env.bash && \
 
 ## CI/CD Integration
 
-All unit tests run automatically via GitHub Actions (push/PR to `main` & `develop`). Matrix covers Python 3.10–3.12. Consider adding optional testinfra stage later.
+All unit tests run automatically via GitHub Actions (push/PR to `main` & `develop`). Matrix covers Python 3.10–3.12.
+
+**Molecule Testing**: The project now uses pytest-testinfra for Molecule scenario verification. See `molecule/default/test_default.py` and `molecule/localhost-only/test_localhost.py` for Python-based system state assertions that complement the unit tests for helper scripts.
 
 ### GitHub Actions Workflow
 
@@ -164,7 +166,7 @@ TEST: python version selection ... FAIL (expected 3.12, got 3.8)
 | Python | `unittest` + mocks | Temp dirs, broad success/failure coverage |
 
 ## Extending
-Add new Bash tests (`test_<script>.bash`) or Python modules (`test_<module>.py`). For system-level assertions (filesystem state, services) consider adopting `pytest-testinfra` and referencing hosts defined in the Molecule scenarios.
+Add new Bash tests (`test_<script>.bash`) or Python modules (`test_<module>.py`). For system-level assertions (filesystem state, services), use pytest-testinfra in Molecule scenarios (see `molecule/default/test_default.py` and `molecule/localhost-only/test_localhost.py` for examples).
 
 ## Prerequisites
 

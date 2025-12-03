@@ -3,6 +3,8 @@
 
 # Core Ansible development tools
 # Includes ansible-core, ansible-lint, molecule, and other essential tools
+# Note: ansible-dev-tools installs pytest-ansible which conflicts with pytest-testinfra
+# The activation script automatically uninstalls pytest-ansible after installation
 ansible-dev-tools
 
 # JMESPath for JSON query support in Ansible
