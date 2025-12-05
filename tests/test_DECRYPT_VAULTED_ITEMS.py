@@ -8,8 +8,10 @@ from unittest.mock import patch, MagicMock
 from io import StringIO
 from subprocess import CalledProcessError
 
+# Add parent directory to path to import DECRYPT_VAULTED_ITEMS module
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 # Import the module to be tested
-# Assuming DECRYPT_VAULTED_ITEMS.py is in the same directory or python path
 # Mock pygments if not available
 try:
     import pygments
