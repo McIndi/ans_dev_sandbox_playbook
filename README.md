@@ -41,13 +41,23 @@ export ANSIBLE_LOG_PATH=./ansible.log
 ```bash
 git clone <repo>
 cd ans_dev_sandbox_playbook
-source ACTIVATE_SANDBOX_ENV.bash        # creates .venv, installs deps
+source ACTIVATE_SANDBOX_ENV.bash        # creates .venv, installs deps, exports ANSIBLE_* vars
 ```
-Wrapper (builds container + runs playbook):
+**Full workflow** (orchestrates container-based testing + localhost execution):
 ```bash
 ./RUN_PLAYBOOK.bash
 ```
-Limit to localhost only:
+This script performs the following steps automatically:
+1. **Generates ephemeral SSH keys** (`ssh_keys/` directory with ed25519 key pair)
+2. **Builds container image** from `containerfile` (Fedora-based SSH target)
+3. **Starts `ansible_target` container** (SSH exposed on host port 2222, auto-removed on exit)
+4. **Creates vault password file** (`vault-pw.txt` with demo password if missing)
+5. **Installs role dependencies** (from `roles/requirements.yml` or symlinks `../ans_dev_sandbox_role/`)
+6. **Installs required collections** (`ansible.posix` and `community.general`)
+7. **Runs playbook** against both `localhost` and `ansible_target` hosts
+8. **Cleanup** (container auto-stopped via trap on exit)
+
+**Limit to localhost only** (skips container setup):
 ```bash
 ansible-playbook -i inventory/main.yml playbooks/sample_playbook.yml -l localhost
 ```
