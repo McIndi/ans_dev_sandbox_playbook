@@ -82,7 +82,7 @@ jobs:
 
       - name: Run Python unit tests
         run: |
-          python3 -m unittest test_DECRYPT_VAULTED_ITEMS.py -v
+          cd tests && python3 -m unittest test_DECRYPT_VAULTED_ITEMS.py -v
         env:
           PYTHONUNBUFFERED: "1"
 
