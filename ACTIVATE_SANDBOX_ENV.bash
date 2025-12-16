@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -x
 
 # set -euo pipefail
 set -o pipefail
@@ -35,7 +35,7 @@ find_python() {
     local candidates="" p ver
 
     # Search common locations
-    for p in /usr/bin/python3* /usr/local/bin/python3* /opt/*/bin/python3*; do
+    for p in ~/.local/share/uv/python/*/bin/python3* /usr/bin/python3* /usr/local/bin/python3* /opt/*/bin/python3*; do
         [[ -x "$p" ]] || continue
         [[ "$(basename "$p")" =~ ^python3([.0-9]+)?$ ]] || continue
 

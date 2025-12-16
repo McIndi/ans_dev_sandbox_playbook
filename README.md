@@ -112,6 +112,7 @@ Features: graceful errors, optional base64 decode, colorized output unless `--no
 | Idempotence fails | Non-declarative task | Adjust module params / `changed_when` |
 | Vault decrypt error | Wrong vault id/password | Verify vault block & `vault-pw.txt` |
 | Python selection unexpected | Older interpreter first | Install newer Python ≥3.10 |
+| [DEPRECATION WARNING]: The 'ansible.posix.profile_tasks' callback plugin implements the following deprecated method(s): playbook_on_stats. This feature will be removed from the callback plugin API in ansible-core version 2.23. Implement the `v2_*` equivalent callback method(s) instead. | `ansible.posix.profile_tasks` keeps a legacy `playbook_on_stats` shim for backward compatibility even though it implements v2 hooks | Safe to ignore while keeping the callback; optionally pin `ansible-core<2.23` until ansible.posix removes the shim and the warning disappears |
 
 ## Security & Compliance
 No persistent config overrides (`ansible.cfg` avoided). Generated SSH keys & demo vault password are sandbox-only. Environment variable configuration is ephemeral and auditable.

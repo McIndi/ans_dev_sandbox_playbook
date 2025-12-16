@@ -61,5 +61,6 @@ See root `README.md` for the vault utility overview.
 | Override ignored | Precedence confusion | Use `-e` or move var to higher layer |
 | Vault failure | Wrong id/password | Check vault label & password file |
 | Idempotence change | Task not declarative | Use module state / set `changed_when` |
+| [DEPRECATION WARNING]: The 'ansible.posix.profile_tasks' callback plugin implements the following deprecated method(s): playbook_on_stats. This feature will be removed from the callback plugin API in ansible-core version 2.23. Implement the `v2_*` equivalent callback method(s) instead. | `ansible.posix.profile_tasks` keeps a legacy `playbook_on_stats` shim for backward compatibility even though it implements v2 hooks | Safe to ignore while keeping the callback; optionally pin `ansible-core<2.23` until ansible.posix removes the shim and the warning disappears |
 
 
