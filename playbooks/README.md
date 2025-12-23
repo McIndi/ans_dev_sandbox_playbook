@@ -9,9 +9,9 @@ Example playbook(s) consuming the sandbox role.
 
 ## Basic Run
 ```bash
-source ACTIVATE_SANDBOX_ENV.bash
-ansible-galaxy install -r roles/requirements.yml --roles-path roles
-ansible-playbook -i inventory/main.yml playbooks/sample_playbook.yml
+python sandbox.py activate
+source .venv/bin/activate
+python sandbox.py run
 ```
 Limit to the container host only:
 ```bash

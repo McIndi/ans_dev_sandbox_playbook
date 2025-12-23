@@ -6,15 +6,14 @@ This is an **Ansible playbook sandbox** for developing and testing the GitHub-ho
 
 ### Key Components
 
-- **External Role Testing**: The role under test (`ans_dev_sandbox_role`) is hosted separately on GitHub and pulled via `roles/requirements.yml`. The local `roles/` directory only contains symlinks during development
-- **Dual-Target Architecture**: Playbooks run against both `localhost` (connection: local) and `ansible_target` (containerized SSH target on port 2222)
-- **Container-Based Testing**: `RUN_PLAYBOOK.bash` orchestrates: building Fedora container → generating ephemeral SSH keys → installing Ansible collections → running playbook
-- **Environment-Driven Config**: All Ansible configuration happens via exported variables in `ACTIVATE_SANDBOX_ENV.bash` (session-scoped, auditable)
+- **External Role Testing**: The role under test (`ans_dev_sandbox_role`) is hosted separately on GitHub and pulled via `roles/requirements.yml`; during development `roles/` may contain symlinks.
+- **Dual-Target Architecture**: Playbooks run against both `localhost` (connection: local) and `ansible_target` (containerized SSH target on port 2222).
+- **Container-Based Testing**: `python sandbox.py run` orchestrates building the Fedora container, generating ephemeral SSH keys, installing Ansible collections, and running the playbook.
+- **Environment-Driven Config**: `python sandbox.py activate` writes `.env` with ANSIBLE_* variables (session-scoped, auditable) and prepares the virtualenv.
 
 ### Critical Files
 
-- `ACTIVATE_SANDBOX_ENV.bash` - Sources this first; sets up venv, exports ~15 ANSIBLE_* variables, selects newest Python >3.9 and <3.15, removes pytest-ansible to avoid plugin conflicts
-- `RUN_PLAYBOOK.bash` - End-to-end workflow script (builds container, generates SSH keys, installs roles/collections, runs playbook)
+- `sandbox.py` - CLI entrypoint with `activate` (venv + .env) and `run` (container + playbook) subcommands
 - `DECRYPT_VAULTED_ITEMS.py` - Utility for inspecting Ansible vault blocks with optional base64 decoding
 - `containerfile` - Fedora-based SSH target for Ansible testing (exposes port 22, runs sshd in foreground)
 - `inventory/main.yml` - Defines `all` group with `localhost` + `ansible_target` (grouped under `local`)
@@ -25,21 +24,23 @@ This is an **Ansible playbook sandbox** for developing and testing the GitHub-ho
 ### Initial Setup
 
 ```bash
-source ACTIVATE_SANDBOX_ENV.bash              # Creates .venv, exports ANSIBLE_* vars
-ansible-galaxy install -r roles/requirements.yml --roles-path roles
+git clone <repo>
+cd ans_dev_sandbox_playbook
+python sandbox.py activate               # Creates .venv, installs deps, writes .env
+source .venv/bin/activate                # Enter the venv for manual commands
+ansible-galaxy install -r roles/requirements.yml --roles-path roles  # optional if not using sandbox run
 ```
 
 ### Running Playbooks
 
 **Full workflow (container + localhost):**
 ```bash
-./RUN_PLAYBOOK.bash
+python sandbox.py run
 ```
 
 **Localhost only (skip container):**
 ```bash
-source ACTIVATE_SANDBOX_ENV.bash
-ansible-playbook -i inventory/main.yml playbooks/sample_playbook.yml -l localhost
+python sandbox.py run --skip-container --limit localhost
 ```
 
 **Container target only:**
@@ -49,11 +50,10 @@ ansible-playbook -i inventory/main.yml playbooks/sample_playbook.yml -l ansible_
 
 ### Testing Strategy
 
-**Unit tests (bash + Python):**
+**Unit tests (Python):**
 ```bash
-bash tests/test_activate_sandbox_env.bash      # Tests Python selection logic
-bash tests/test_run_playbook.bash              # End-to-end script validation
-python3 -m unittest -v test_DECRYPT_VAULTED_ITEMS.py
+python -m unittest -v tests/test_sandbox.py
+python -m unittest -v test_DECRYPT_VAULTED_ITEMS.py
 ```
 
 **Molecule scenarios:**
@@ -62,7 +62,8 @@ python3 -m unittest -v test_DECRYPT_VAULTED_ITEMS.py
 - `molecule/with-linting/` - Includes yamllint + ansible-lint
 
 ```bash
-source ACTIVATE_SANDBOX_ENV.bash
+python sandbox.py activate
+source .venv/bin/activate
 molecule test -s default                       # Full test sequence
 molecule test -s with-linting                  # With lint checks
 ```
@@ -75,28 +76,29 @@ ansible-lint playbooks/ molecule/
 
 ### Container Workflow Details
 
-`RUN_PLAYBOOK.bash` uses Podman (prefers) or Docker with SELinux context handling (`:z` flag for Podman). Container lifecycle:
+`sandbox.py run` prefers Podman (falls back to Docker) with SELinux-friendly mounts when using Podman. Lifecycle:
 1. Build `ansible_target` image from `containerfile`
 2. Generate ephemeral ed25519 SSH key pair in `ssh_keys/`
-3. Run container with `ssh_keys/` mounted read-only
+3. Run container with `ssh_keys/` mounted read-only, default host port 2222
 4. Install `ansible.posix` and `community.general` collections
-5. Execute playbook against both targets
-6. Cleanup on exit (container auto-removed via `--rm`)
+5. Ensure role dependencies (symlink sibling repo if present; otherwise galaxy install)
+6. Execute playbook against both targets
+7. Cleanup on exit (container stopped)
 
 ## Project-Specific Conventions
 
 ### Configuration Management
 
-**NEVER create `ansible.cfg`** — explicitly blocked in `.gitignore`. All configuration via environment variables:
+**NEVER create `ansible.cfg`** — explicitly blocked in `.gitignore`. Configuration is stored in `.env` by `python sandbox.py activate`:
 - `ANSIBLE_ROLES_PATH=roles`
 - `ANSIBLE_VAULT_PASSWORD_FILE=$PLAYBOOK_PATH/vault-pw.txt`
 - `ANSIBLE_CALLBACKS_ENABLED='profile_tasks'`
 - `ANSIBLE_LOG_PATH=./ansible.log`
-- *(See `ACTIVATE_SANDBOX_ENV.bash` lines 22-30 for complete list)*
+- and related ANSIBLE_* defaults
 
 ### Python Version Selection
 
-The activation script auto-selects the newest Python within **>3.9 and <3.15**. Logic in `select_python()` function:
+`python sandbox.py activate` auto-selects the newest Python within **>3.9 and <3.15**:
 - Scans `/usr/bin/`, `/usr/local/bin/`, `/opt/*/bin/` for `python3*`
 - Parses semantic versions, selects highest `< 3.15.0`
 - Falls back to `python3` in PATH if no candidates found
@@ -127,7 +129,7 @@ External role installed via `roles/requirements.yml`:
   version: main
 ```
 
-During development, `RUN_PLAYBOOK.bash` creates symlink if `roles/` is empty:
+During development, `python sandbox.py run` (or manual setup) creates a symlink if `roles/` is empty and a sibling `../ans_dev_sandbox_role/` exists:
 ```bash
 ln -snf ../ans_dev_sandbox_role roles/ans_dev_sandbox_role
 ```
@@ -139,70 +141,24 @@ Demo vault password (`password`) stored in `vault-pw.txt` (git-ignored). Decrypt
 python3 DECRYPT_VAULTED_ITEMS.py --file vars/file.yml --vault-id dev [--decode] [--color]
 ```
 
-## Integration Points
+### Container Workflow Tips
 
-### External Dependencies
+- Default container name: `ansible_target`; host SSH port: `2222` (override via `.env` or `--container-host-port`).
+- Podman preferred; falls back to Docker if unavailable.
+- Host key checking disabled for sandbox runs.
 
-- **Collections**: `ansible.posix`, `community.general` (installed by `RUN_PLAYBOOK.bash`)
-- **Container Runtime**: Podman (preferred) or Docker with feature detection
-- **Python Packages**: `requirements.txt` includes `molecule`, `molecule-plugins`, `ansible-lint`, `yamllint`, `pygments`, `pytest-testinfra`
+### Troubleshooting Context
 
-### CI/CD Workflows
-
-- `.github/workflows/molecule.yml` - Matrix tests across Molecule scenarios
-- `.github/workflows/unit-tests.yml` - Bash + Python unit test execution
-
-## Common Patterns
-
-### Task Cleanup Pattern
-
-Playbooks should clean up temporary resources in `post_tasks`:
-```yaml
-post_tasks:
-  - name: Clean up temporary directory created by ans_dev_sandbox_role
-    ansible.builtin.file:
-      path: "{{ temp_dir_results.path }}"
-      state: absent
-    when: temp_dir_results is defined and temp_dir_results.path is defined
-    failed_when: false
-```
-
-### Inventory Host Variables
-
-Both hosts use `ansible_python_interpreter: auto_silent` to avoid deprecation warnings. Container target requires explicit SSH connection details:
-```yaml
-ansible_target:
-  ansible_host: 127.0.0.1
-  ansible_port: 2222
-  ansible_user: root
-```
-
-### Error Handling in Scripts
-
-Bash scripts use `set -euo pipefail` with trap-based cleanup:
-```bash
-cleanup() {
-    local exit_code=$?
-    echo "Cleaning up..."
-    "$CONTAINER_RUNTIME" container stop "$CONTAINER_NAME" 2>/dev/null || true
-    exit "$exit_code"
-}
-trap cleanup EXIT
-```
-
-## Troubleshooting Context
-
-- **"molecule: command not found"** → Forgot to `source ACTIVATE_SANDBOX_ENV.bash`
-- **argparse.ArgumentError with --ansible-inventory** → `pytest-ansible` plugin conflict; activation script auto-removes it
+- **"molecule: command not found"** → Run `python sandbox.py activate` then `source .venv/bin/activate`
+- **argparse.ArgumentError with --ansible-inventory** → `python sandbox.py activate` removes pytest-ansible
 - **Vault decrypt errors** → Verify vault-id matches block header (`vault_id: !vault |`)
-- **Container port conflicts** → Default port 2222 may be in use; modify `CONTAINER_HOST_PORT` in `RUN_PLAYBOOK.bash`
-- **Python version issues** → Activation script selects 3.10–3.14 automatically; ensure a compatible version (>3.9 and <3.15) is installed
-- **Podman "database configuration mismatch"** → Occurs on Linux with VS Code installed via Snap. Path inconsistencies in Podman's storage config (static directory/graphroot) don't match runtime environment. Solutions: (1) Quick fix: `podman system reset` (⚠️ destroys all containers/images), (2) Preserve data: manually edit `~/.config/containers/storage.conf` to match current paths shown in error, (3) Root cause fix: use native VS Code package instead of Snap to avoid path namespace issues. Verify fix with `podman info | grep -A5 graphRoot`. See `docs/TROUBLESHOOTING.md` for detailed solutions
+- **Container port conflicts** → Override with `python sandbox.py run --container-host-port 2223`
+- **Python version issues** → Activation selects 3.10–3.14 automatically; ensure a compatible version is installed
 
-## Development Guidelines
+### Development Guidelines
 
-1. **Always activate environment first**: `source ACTIVATE_SANDBOX_ENV.bash` before any Ansible commands
+1. **Always activate environment first**: `python sandbox.py activate` before Ansible commands
 2. **Test changes across scenarios**: Run at least `molecule test -s default` before committing
-3. **Lint before commit**: Use `yamllint` and `ansible-lint` (not auto-run by Molecule ≥25)
+3. **Lint before commit**: Use `yamllint` and `ansible-lint`
 4. **Document vault changes**: Update vault-id references if modifying encrypted variables
 5. **Keep role external**: Never inline the role code—it lives in `briankearney/ans_dev_sandbox_role` repo

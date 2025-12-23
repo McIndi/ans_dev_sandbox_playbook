@@ -87,7 +87,7 @@ rm -f packages.microsoft.gpg
 After reinstalling VS Code, test Podman:
 ```bash
 podman info | grep -A5 graphRoot
-./RUN_PLAYBOOK.bash  # Test with project
+python sandbox.py run  # Test with project
 ```
 
 #### Solution 4: Alternative - Use Docker Instead
@@ -103,7 +103,7 @@ newgrp docker  # Or log out and back in
 
 # Verify Docker works
 docker info
-./RUN_PLAYBOOK.bash  # Script auto-detects Docker
+python sandbox.py run  # CLI auto-detects Docker
 ```
 
 **Verification Steps:**
@@ -118,7 +118,7 @@ podman info | grep -E "(graphRoot|runRoot|static)"
 podman run --rm alpine:latest echo "Podman is working"
 
 # 3. Run the project's container workflow
-./RUN_PLAYBOOK.bash
+python sandbox.py run
 
 # 4. Verify container networking
 podman ps -a
@@ -158,7 +158,7 @@ ERROR    Verifier tests failed
 The `pytest-ansible` and `pytest-testinfra` plugins both register the same command-line argument (`--inventory` / `--ansible-inventory`), causing a conflict during pytest initialization. This affects Python 3.12+ due to stricter argparse validation.
 
 **Solution:**
-The activation script (`ACTIVATE_SANDBOX_ENV.bash`) automatically uninstalls `pytest-ansible` after installing dependencies. This is the recommended approach since:
+`python sandbox.py activate` installs dependencies and then removes `pytest-ansible` to prevent this clash because:
 - We only need `pytest-testinfra` for Molecule verify steps
 - The `pytest-ansible` plugin is not used in our test scenarios
 - Removing it has no impact on other Ansible functionality
@@ -170,32 +170,34 @@ pip uninstall -y pytest-ansible
 ```
 
 **Prevention:**
-Always use `source ACTIVATE_SANDBOX_ENV.bash` to set up your environment. The script handles this automatically.
+Run `python sandbox.py activate` (and `source .venv/bin/activate` when needed) before Molecule or pytest.
 
 ### Python Version Issues
 
 **Issue:** Virtual environment created with Python 3.13 or higher
 
 **Solution:**
-The project supports Python >3.9 and <3.15 due to historical pytest plugin conflicts mitigated by our environment setup. The activation script automatically selects the newest compatible version available on your system. If you need to recreate your environment:
+The project supports Python >3.9 and <3.15 due to historical pytest plugin conflicts mitigated by our environment setup. `python sandbox.py activate` automatically selects the newest compatible version available on your system. If you need to recreate your environment:
 
 ```bash
 deactivate
 rm -rf .venv
-source ACTIVATE_SANDBOX_ENV.bash
+python sandbox.py activate
+source .venv/bin/activate
 ```
 
-The script will automatically choose the best available Python version (typically 3.10–3.14).
+The CLI will automatically choose the best available Python version (typically 3.10–3.14).
 
 ### Container Port Conflicts
 
-**Error:** Port 2222 already in use when running `RUN_PLAYBOOK.bash`
+**Error:** Port 2222 already in use when running `python sandbox.py run`
 
 **Solution:**
-Edit `RUN_PLAYBOOK.bash` and modify the `CONTAINER_HOST_PORT` variable to use a different port:
+Override the port when running or adjust `.env`:
 
 ```bash
-CONTAINER_HOST_PORT=2223  # or any available port
+python sandbox.py run --container-host-port 2223  # or any available port
+# or edit CONTAINER_HOST_PORT in .env then rerun
 ```
 
 ### Molecule Config Warnings
@@ -236,7 +238,7 @@ ansible-galaxy collection install -r requirements.txt  # If collections are in r
 ansible-galaxy collection install ansible.posix community.general
 ```
 
-These are automatically installed by `RUN_PLAYBOOK.bash` but may be needed for manual playbook runs.
+These are automatically installed by `python sandbox.py run` but may be needed for manual playbook runs.
 
 ### Role Not Found
 
@@ -257,7 +259,7 @@ ln -snf ../ans_dev_sandbox_role roles/ans_dev_sandbox_role
 
 If you encounter an issue not covered here:
 
-1. Check that your environment is activated: `source ACTIVATE_SANDBOX_ENV.bash`
+1. Check that your environment is activated: `python sandbox.py activate` then `source .venv/bin/activate`
 2. Verify Python version: `python --version` (should be within >3.9 and <3.15)
 3. Check for conflicting packages: `pip list | grep pytest`
 4. Review logs: `cat ansible.log`

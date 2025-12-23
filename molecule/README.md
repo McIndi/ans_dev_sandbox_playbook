@@ -29,7 +29,8 @@ These are already installed in the `.venv` virtual environment.
 ### Activate Virtual Environment
 
 ```bash
-source ACTIVATE_SANDBOX_ENV.bash
+python sandbox.py activate
+source .venv/bin/activate
 ```
 
 ### Run All Tests
@@ -236,7 +237,8 @@ ansible-galaxy install -r roles/requirements.yml --roles-path ./roles --force
 #### Molecule Command Not Found
 ```bash
 # Ensure sandbox environment is activated
-source ACTIVATE_SANDBOX_ENV.bash
+python sandbox.py activate
+source .venv/bin/activate
 
 # Verify installation
 molecule --version

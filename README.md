@@ -15,14 +15,14 @@ For setup, architecture, and usage guides, see:
 - **Playbook:** `playbooks/sample_playbook.yml`
 - **Inventory:** `inventory/main.yml` (`local` group contains `localhost` and dynamic container host `ansible_target`)
 - **Role requirements:** `roles/requirements.yml`
-- **Helper scripts:** `ACTIVATE_SANDBOX_ENV.bash`, `RUN_PLAYBOOK.bash`, `DECRYPT_VAULTED_ITEMS.py`
-- **Testing:** Molecule scenarios + Bash & Python unit tests
+- **Helper CLI:** `sandbox.py` (`activate`/`run` subcommands), `DECRYPT_VAULTED_ITEMS.py`
+- **Testing:** Molecule scenarios + Python unit tests
 - **Linting:** `.ansible-lint`, `.yamllint`
-- **Container build:** `containerfile` (used by `RUN_PLAYBOOK.bash` to create `ansible_target`)
+- **Container build:** `containerfile` (used by `python sandbox.py run` to create `ansible_target`)
 - **Dynamic assets (generated, not committed):** `ssh_keys/`, `vault-pw.txt`, virtualenv `.venv`
 
 ## Design Philosophy (Condensed)
-No `ansible.cfg` is committed—enterprise environments often disallow it. All configuration is set via exported environment variables in `ACTIVATE_SANDBOX_ENV.bash` (session-scoped, auditable, isolated). `.gitignore` blocks accidental `ansible.cfg` addition.
+No `ansible.cfg` is committed—enterprise environments often disallow it. All configuration is set via environment variables written to `.env` by `python sandbox.py activate` (session-scoped, auditable, isolated). `.gitignore` blocks accidental `ansible.cfg` addition.
 
 Key exported examples:
 ```bash
@@ -32,22 +32,23 @@ export ANSIBLE_LOG_PATH=./ansible.log
 ```
 
 ## Prerequisites
-- Python >3.9 and <3.15 (auto-selected by activation script; typically 3.10–3.14)
+- Python >3.9 and <3.15 (auto-selected by `python sandbox.py activate`; typically 3.10–3.14)
 - ansible-core >= 2.14 (installed via `requirements.txt`)
-- Optional: Podman or Docker (for container-based testing via `RUN_PLAYBOOK.bash`)
-- Dependencies from `requirements.txt` (auto-installed by activation script)
+- Optional: Podman or Docker (for container-based testing via `python sandbox.py run`)
+- Dependencies from `requirements.txt` (auto-installed by `python sandbox.py activate`)
 
 ## Usage (Typical Flow)
 ```bash
 git clone <repo>
 cd ans_dev_sandbox_playbook
-source ACTIVATE_SANDBOX_ENV.bash        # creates .venv, installs deps, exports ANSIBLE_* vars
+python sandbox.py activate               # creates .venv, installs deps, writes .env for run
+source .venv/bin/activate                # ensure the virtualenv is active
 ```
 **Full workflow** (orchestrates container-based testing + localhost execution):
 ```bash
-./RUN_PLAYBOOK.bash
+python sandbox.py run                    # uses .env defaults; prefers podman on port 2222
 ```
-This script performs the following steps automatically:
+The CLI performs the following steps automatically:
 1. **Generates ephemeral SSH keys** (`ssh_keys/` directory with ed25519 key pair)
 2. **Builds container image** from `containerfile` (Fedora-based SSH target)
 3. **Starts `ansible_target` container** (SSH exposed on host port 2222, auto-removed on exit)
@@ -59,27 +60,26 @@ This script performs the following steps automatically:
 
 **Limit to localhost only** (skips container setup):
 ```bash
-ansible-playbook -i inventory/main.yml playbooks/sample_playbook.yml -l localhost
+python sandbox.py run --skip-container --limit localhost
 ```
 
 ## Quick Commands
-- **Full workflow:** `./RUN_PLAYBOOK.bash`
-- **Localhost only:** `ansible-playbook -i inventory/main.yml playbooks/sample_playbook.yml -l localhost`
+- **Activate env:** `python sandbox.py activate && source .venv/bin/activate`
+- **Full workflow:** `python sandbox.py run` (after activation)
+- **Localhost only:** `python sandbox.py run --skip-container --limit localhost`
 - **Container target only:** `ansible-playbook -i inventory/main.yml playbooks/sample_playbook.yml -l ansible_target`
 
 ## Container Workflow (Brief)
-`RUN_PLAYBOOK.bash` builds an image via `containerfile`, starts `ansible_target` (SSH exposed on host port 2222), generates ephemeral `ssh_keys/`, installs required collections (`ansible.posix`, `community.general`), and runs the playbook across `localhost` + `ansible_target` (unless limited). These artifacts are transient.
+`python sandbox.py run` builds an image via `containerfile`, starts `ansible_target` (SSH exposed on host port 2222), generates ephemeral `ssh_keys/`, installs required collections (`ansible.posix`, `community.general`), and runs the playbook across `localhost` + `ansible_target` (unless limited). These artifacts are transient.
 
 ## Testing & Linting
 Run core tests:
 ```bash
-bash tests/test_activate_sandbox_env.bash
-bash tests/test_run_playbook.bash
-python3 -m unittest -v test_DECRYPT_VAULTED_ITEMS.py
+python -m unittest -v tests/test_sandbox.py
+python -m unittest -v test_DECRYPT_VAULTED_ITEMS.py
 ```
-Run Molecule default scenario:
+Run Molecule default scenario (after `python sandbox.py activate` and `source .venv/bin/activate` to enter the venv):
 ```bash
-source ACTIVATE_SANDBOX_ENV.bash
 molecule test -s default
 ```
 Lint (Molecule ≥25 removed built-in lint stage):
@@ -101,14 +101,14 @@ Features: graceful errors, optional base64 decode, colorized output unless `--no
 `inventory/main.yml` includes both `localhost` (connection local) and `ansible_target` (container host with forwarded SSH on port 2222). Use `-l` to scope runs.
 
 ## Dynamic / Demo Artefacts
-- `ssh_keys/` created only by `RUN_PLAYBOOK.bash` (excluded from repo)
+- `ssh_keys/` created only by `python sandbox.py run` (excluded from repo)
 - `vault-pw.txt` demo password file—replace or manage securely in production
 - Temporary virtualenv `.venv` created automatically, removable at will
 
 ## Troubleshooting (Selected)
 | Symptom | Cause | Resolution |
 |---------|-------|-----------|
-| `molecule: command not found` | Not activated venv | `source ACTIVATE_SANDBOX_ENV.bash` |
+| `molecule: command not found` | Not activated venv | `python sandbox.py activate` then `source .venv/bin/activate` |
 | Idempotence fails | Non-declarative task | Adjust module params / `changed_when` |
 | Vault decrypt error | Wrong vault id/password | Verify vault block & `vault-pw.txt` |
 | Python selection unexpected | Older interpreter first | Install newer Python ≥3.10 |
