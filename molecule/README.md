@@ -4,6 +4,14 @@ For detailed testing, validation, and CI/CD guidance, see the [Testing and Valid
 
 Comprehensive testing infrastructure using [Molecule](https://ansible.readthedocs.io/projects/molecule/) for the `ans_dev_sandbox_playbook` Ansible playbook.
 
+## Quick Start
+
+```bash
+python sandbox.py activate
+source .venv/bin/activate
+molecule test -s default
+```
+
 ## Overview
 
 This repository includes three Molecule test scenarios to validate the playbook and the `ans_dev_sandbox_role` it uses:
@@ -17,12 +25,12 @@ All scenarios use the **delegated** driver, which runs tests directly on the loc
 ## Prerequisites
 
 - Python >3.9 and <3.15
-- Ansible 2.9 or higher
-- Molecule 6.0 or higher
-- ansible-lint 6.0 or higher
+- ansible-core ≥ 2.14 (installed via the repo’s requirements)
+- Molecule (current supported version)
+- ansible-lint
 - yamllint
 
-These are already installed in the `.venv` virtual environment.
+These are installed via `python sandbox.py activate` into `.venv`.
 
 ## Quick Start
 

@@ -1,26 +1,34 @@
 # defaults/
 
-For variable management, overrides, and best practices, see the [Configuration Guide](https://github.com/briankearney/ans_dev_sandbox_playbook/wiki/Configuration) in the [project wiki](https://github.com/briankearney/ans_dev_sandbox_playbook/wiki).
+Convenience variables for experiments and tutorials. This is not the role’s intrinsic `defaults/`; include it explicitly via `vars_files` when you want its values applied.
 
-Convenience variable file (not a role `defaults/` directory). Must be explicitly loaded via `vars_files`.
+## File
+- `main.yml` – contains simple variables like `sample_message` used by the sample playbook.
 
-File of interest:
-- `main.yml` — defines `sample_message`, matching the override already present in `sample_playbook.yml` (kept simple for illustration).
+## Quick Start
 
-Usage
-- If you want these values applied, include them explicitly:
-	```yaml
-	# Inside a playbook
-	- hosts: local
-		vars_files:
-			- ../defaults/main.yml
-		roles:
-			- ans_dev_sandbox_role
-	```
-- Otherwise rely on the role's own `defaults/` directory for intrinsic defaults.
-- Edit `defaults/main.yml` to experiment with different values without modifying the role.
+```bash
+python sandbox.py activate
+source .venv/bin/activate
+ansible-playbook -i inventory/main.yml playbooks/sample_playbook.yml -l localhost
+```
 
-Notes
-- Keep values minimal & non-sensitive; put secrets in vaulted host/group vars.
-- To promote a variable to the role's intrinsic defaults, move it into the role’s `defaults/main.yml`.
-- Precedence: if included via `vars_files`, these values override role defaults but remain below play vars and extra vars.
+## Override Patterns
+- Extra vars override everything in this repo context:
+
+```bash
+ansible-playbook -i inventory/main.yml playbooks/sample_playbook.yml \
+  -e sample_message="Hello from -e"
+```
+
+- Play vars (`vars:` in a play) override this file.
+- Role defaults (inside the external role) are overridden by values loaded via `vars_files`.
+
+## Best Practices
+- Keep values non-sensitive here; use vaulted host/group vars for secrets.
+- Treat this file as a sandbox for trying different values without editing the external role.
+- If a variable becomes intrinsic to the role, move it into the role’s `defaults/main.yml` in the role repository.
+
+## Troubleshooting
+- If values don’t seem to apply, ensure the play includes `vars_files: ../defaults/main.yml`.
+- Use `ansible-inventory --graph -i inventory/main.yml` to confirm hosts and scope, then try `-l localhost` to target the play correctly.

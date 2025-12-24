@@ -24,7 +24,7 @@ This error occurs when Podman's stored database paths don't match the current ru
 
 #### Solution 1: Reset Podman Storage (Destructive but Fast)
 
-⚠️ **WARNING:** This destroys all containers, images, and volumes.
+ **WARNING:** This destroys all containers, images, and volumes.
 
 ```bash
 podman system reset

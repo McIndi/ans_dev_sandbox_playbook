@@ -1,13 +1,10 @@
 # inventory/
 
-For inventory structure, host management, and configuration details, see:
-- [Configuration Guide](https://github.com/briankearney/ans_dev_sandbox_playbook/wiki/Configuration)
-- [Inventory](https://github.com/briankearney/ans_dev_sandbox_playbook/wiki#inventory)
-
-Sample YAML inventory consumed by the playbook and Molecule scenarios.
+Inventory groups both `localhost` (connection: local) and an optional container target (`ansible_target`) for dual‑target testing.
 
 ## File
-`main.yml` (excerpt matches repository):
+`main.yml` defines hosts and the `local` group:
+
 ```yaml
 ---
 all:
@@ -27,26 +24,30 @@ all:
         ansible_target: {}
 ```
 
-`ansible_target` is created by `python sandbox.py run` (container with SSH forwarded to host port 2222). Keys are generated dynamically under `ssh_keys/`.
+`ansible_target` is created by `python sandbox.py run` and exposes SSH on host port 2222. Ephemeral keys are generated in `ssh_keys/`.
 
-## Usage
+## Quick Start
+
 ```bash
-ansible-playbook -i inventory/main.yml playbooks/sample_playbook.yml        # all hosts
+# Run against all hosts
+ansible-playbook -i inventory/main.yml playbooks/sample_playbook.yml
+
+# Limit to localhost
 ansible-playbook -i inventory/main.yml playbooks/sample_playbook.yml -l localhost
+
+# Limit to container target
 ansible-playbook -i inventory/main.yml playbooks/sample_playbook.yml -l ansible_target
+
+# Visualize inventory
+ansible-inventory -i inventory/main.yml --graph
+ansible-inventory -i inventory/main.yml --list
 ```
 
 ## Extending
-Add new hosts under `all.hosts` or group them under additional children. Use `ansible-inventory --graph` to visualize.
+Add hosts under `all.hosts` or new children groups. Keep `auto_silent` for Python interpreter detection to avoid warnings.
 
-## Notes
-- `auto_silent` suppresses interpreter warnings.
-- Limit scope with `-l` to speed iteration.
-
-## Troubleshooting (Quick)
-| Issue | Cause | Action |
-|-------|-------|--------|
-| Host unreachable | Port / container not running | Re-run `python sandbox.py run` or check port 2222 |
-| Wrong vars applied | Group precedence confusion | Inspect with `ansible-inventory --host <name>` |
-| Python warnings | Missing interpreter hint | Ensure `auto_silent` present |
-| [DEPRECATION WARNING]: The 'ansible.posix.profile_tasks' callback plugin implements the following deprecated method(s): playbook_on_stats. This feature will be removed from the callback plugin API in ansible-core version 2.23. Implement the `v2_*` equivalent callback method(s) instead. | `ansible.posix.profile_tasks` keeps a legacy `playbook_on_stats` shim for backward compatibility even though it implements v2 hooks | Safe to ignore while keeping the callback; optionally pin `ansible-core<2.23` until ansible.posix removes the shim and the warning disappears |
+## Troubleshooting
+- Host unreachable: verify container is running or re-run `python sandbox.py run`.
+- Wrong variables applied: inspect precedence with `ansible-inventory --host <name>`.
+- Python interpreter warnings: ensure `ansible_python_interpreter: auto_silent` is set.
+- Profile tasks deprecation warning: safe to ignore; pin `ansible-core<2.23` if you prefer to suppress it.
