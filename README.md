@@ -9,6 +9,7 @@ Lightweight Ansible playbook sandbox for developing and validating the GitHub-ho
 
 - [Documentation & Wiki](#documentation--wiki)
 - [Quick Map](#quick-map)
+- [Demo Video](#quick-video)
 - [Quick Start](#quick-start)
 - [Design Philosophy](#design-philosophy-condensed)
 - [Prerequisites](#prerequisites)
